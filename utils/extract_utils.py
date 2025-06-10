@@ -1,8 +1,5 @@
 # utils/extract_utils.py
 
-from dotenv import load_dotenv
-load_dotenv()
-
 import os
 import json
 from openai import OpenAI

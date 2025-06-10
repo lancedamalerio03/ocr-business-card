@@ -1,7 +1,4 @@
 import os
-from dotenv import load_dotenv
-load_dotenv()
-
 import io
 import streamlit as st
 import pandas as pd
@@ -170,25 +167,35 @@ with st.expander("🔑 API Key Status", expanded=False):
         st.session_state.openai_api_key = ''
         st.rerun()
 
-# — Google Sheets auth —
+# — Google Sheets auth with secrets support —
 st.markdown("### Google Sheets Configuration")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-sa_file = os.getenv("SERVICE_ACCOUNT_FILE")
-if not sa_file or not os.path.isfile(sa_file):
-    st.error("🔑 SERVICE_ACCOUNT_FILE not set or file not found in .env")
-    st.stop()
 
 try:
-    creds = Credentials.from_service_account_file(sa_file, scopes=SCOPES)
+    # Check if running on Streamlit Cloud (has secrets) or locally
+    if "google" in st.secrets:
+        # Running on Streamlit Cloud - use secrets
+        creds = Credentials.from_service_account_info(st.secrets["google"], scopes=SCOPES)
+        sheet_id = st.secrets["SHEET_ID"]
+        st.success("✅ Google Sheets authentication successful (using Streamlit secrets)")
+    else:
+        # Running locally - use environment variables
+        sa_file = os.getenv("SERVICE_ACCOUNT_FILE")
+        if not sa_file or not os.path.isfile(sa_file):
+            st.error("🔑 SERVICE_ACCOUNT_FILE not set or file not found in .env")
+            st.stop()
+        
+        creds = Credentials.from_service_account_file(sa_file, scopes=SCOPES)
+        sheet_id = os.getenv("SHEET_ID")
+        if not sheet_id:
+            st.error("🆔 SHEET_ID not set in .env")
+            st.stop()
+        st.success("✅ Google Sheets authentication successful (using local .env)")
+    
     gc = gspread.authorize(creds)
-    st.success("✅ Google Sheets authentication successful")
+    
 except Exception as e:
     st.error(f"❌ Google Sheets authentication failed: {e}")
-    st.stop()
-
-sheet_id = os.getenv("SHEET_ID")
-if not sheet_id:
-    st.error("🆔 SHEET_ID not set in .env")
     st.stop()
 
 try:
