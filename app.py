@@ -167,17 +167,43 @@ with st.expander("🔑 API Key Status", expanded=False):
         st.session_state.openai_api_key = ''
         st.rerun()
 
-# — Google Sheets auth with secrets support —
+# — DEBUG SECRETS SECTION —
+st.markdown("### 🔧 Debug: Secrets Information")
+st.markdown("**Available secrets keys:**")
+try:
+    secrets_keys = list(st.secrets.keys())
+    st.write(f"Root level keys: {secrets_keys}")
+    
+    if "google" in st.secrets:
+        google_keys = list(st.secrets["google"].keys())
+        st.write(f"Google section keys: {google_keys}")
+    else:
+        st.write("❌ No 'google' section found")
+    
+    if "SHEET_ID" in st.secrets:
+        st.write(f"✅ SHEET_ID found: {st.secrets['SHEET_ID']}")
+    else:
+        st.write("❌ SHEET_ID not found at root level")
+        
+except Exception as e:
+    st.error(f"Error reading secrets: {e}")
+
+st.markdown("---")
+
+# — Google Sheets auth with better error handling —
 st.markdown("### Google Sheets Configuration")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 try:
     # Check if running on Streamlit Cloud (has secrets) or locally
-    if "google" in st.secrets:
+    if "google" in st.secrets and "SHEET_ID" in st.secrets:
         # Running on Streamlit Cloud - use secrets
         creds = Credentials.from_service_account_info(st.secrets["google"], scopes=SCOPES)
         sheet_id = st.secrets["SHEET_ID"]
         st.success("✅ Google Sheets authentication successful (using Streamlit secrets)")
+    elif "google" in st.secrets:
+        st.error("❌ Found 'google' section but missing 'SHEET_ID' at root level")
+        st.stop()
     else:
         # Running locally - use environment variables
         sa_file = os.getenv("SERVICE_ACCOUNT_FILE")
