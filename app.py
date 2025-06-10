@@ -167,7 +167,7 @@ with st.expander("🔑 API Key Status", expanded=False):
         st.session_state.openai_api_key = ''
         st.rerun()
 
-# — Google Sheets auth - FIXED to read SHEET_ID from google section —
+# — Google Sheets auth with secrets support —
 st.markdown("### Google Sheets Configuration")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -177,7 +177,7 @@ try:
         # Running on Streamlit Cloud - use secrets
         creds = Credentials.from_service_account_info(st.secrets["google"], scopes=SCOPES)
         
-        # FIXED: Look for SHEET_ID in the google section, not at root level
+        # Get SHEET_ID from the google section where it actually is
         if "SHEET_ID" in st.secrets["google"]:
             sheet_id = st.secrets["google"]["SHEET_ID"]
         else:
